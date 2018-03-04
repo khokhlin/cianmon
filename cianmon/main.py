@@ -17,8 +17,8 @@ from requests.packages.urllib3.exceptions import InsecureRequestWarning
 URL = """https://cian.ru/sale/flat/{}/"""
 PAUSE = 3  # A pause needed to prevent a captcha check.
 
-DATABASE = "data/cian.db"
-
+CFG_DIR = os.path.expanduser("~/.cianmon/")
+DATABASE = os.path.join(CFG_DIR, "cian.db")
 CREATE_FLATS = (
     "CREATE TABLE IF NOT EXISTS flats (flat_id INT PRIMARY KEY, "
     "title TEXT, square_total INT, square_live INT, square_kitchen "
@@ -44,7 +44,6 @@ def parse_args():
     parser = argparse.ArgumentParser(prog="cianmon")
     subs = parser.add_subparsers(dest="action")
     subs.required = True
-    subs.add_parser("init")
     sub = subs.add_parser("history")
     sub = subs.add_parser("get_prices")
     sub.add_argument("--ids-file", type=str, help="Text file with appartment ids")
@@ -123,13 +122,19 @@ def get_prices(ids):
             sleep(PAUSE)
 
 
-# Actions
-
-def do_init():
+def init_db():
+    if os.path.exists(DATABASE):
+        answer = input("Database file exists. Continue? [y/n]: ")
+        if answer.lower() in ("n", "no"):
+            return
+    if not os.path.exists(CFG_DIR):
+        os.mkdir(CFG_DIR)
     with get_cursor() as cursor:
         cursor.execute(CREATE_FLATS)
         cursor.execute(CREATE_PRICE_HISTORY)
 
+
+# Actions
 
 def do_get_prices(ids_file=None, ids=None):
     ids = set(ids) if ids else set()
@@ -158,7 +163,7 @@ def do_history(ids=None):
 def main():
     requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
     if not os.path.exists(DATABASE):
-        do_init()
+        init_db()
     args = vars(parse_args())
     action = "do_" + args.pop("action")
     action = globals().get(action)

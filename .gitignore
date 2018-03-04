@@ -1,2 +1,4 @@
-data/*
 __pycache__
+cianmon.egg-info/
+build/
+dist/
