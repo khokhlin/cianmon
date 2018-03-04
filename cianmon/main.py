@@ -1,4 +1,5 @@
 """cian.ru parser"""
+import os
 import sys
 import re
 import argparse
@@ -10,6 +11,7 @@ from collections import namedtuple
 from dateutil import parser as date_parser
 from  bs4 import BeautifulSoup
 import requests
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
 
 URL = """https://cian.ru/sale/flat/{}/"""
@@ -40,7 +42,7 @@ PRICES_INSERT = (
 
 def parse_args():
     parser = argparse.ArgumentParser(prog="cianmon")
-    subs = parser.add_subparsers(dest="subparser")
+    subs = parser.add_subparsers(dest="action")
     subs.required = True
     subs.add_parser("init")
     sub = subs.add_parser("history")
@@ -88,7 +90,7 @@ def get_flat_info(flat_id):
         "floor", "floors", "build_year", "description", "geo"
     ])
 
-    soup = BeautifulSoup(get_flat_page(flat_id), "lxml")
+    soup = BeautifulSoup(get_flat_page(flat_id), "html.parser")
     title = soup.find("h1", class_=re.compile("title.*")).text
     descr_el = soup.find("div", {"id": "description"})
     description = descr_el.find(class_=re.compile("description-text.*")).text
@@ -154,8 +156,11 @@ def do_history(ids=None):
 
 
 def main():
+    requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+    if not os.path.exists(DATABASE):
+        do_init()
     args = vars(parse_args())
-    action = "do_" + args.pop("subparser")
+    action = "do_" + args.pop("action")
     action = globals().get(action)
     action(**args)
 
