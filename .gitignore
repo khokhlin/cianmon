@@ -2,3 +2,4 @@ __pycache__
 cianmon.egg-info/
 build/
 dist/
+*.swp

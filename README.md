@@ -1,14 +1,14 @@
-## Cianmon
+# Cianmon
 
 Скрипт для мониторинга цен на квартиры на сайте cian.ru
 
-### Установка
+## Установка
 
 ```
 git clone https://github.com/khokhlin/cianmon && cd cianmon && python3 setup.py install
 ```
 
-### Использование
+## Использование
 
 --ids-file - файл со списком id объявлений.
 --ids - список id объявлений.
@@ -16,7 +16,7 @@ git clone https://github.com/khokhlin/cianmon && cd cianmon && python3 setup.py 
 Обновление цен:
 
 ```
-cianmon get_prices --ids-file=/tmp/flats.txt --ids 1 2 3
+cianmon update --ids-file=/tmp/flats.txt --ids 1 2 3
 ```
 
 История изменений:
