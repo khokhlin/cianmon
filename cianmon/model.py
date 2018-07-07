@@ -1,13 +1,20 @@
 import os
+import datetime
+import logging
+from collections import namedtuple
 
-from peewee import CharField, DateField, IntegerField, TextField
+from peewee import CharField, DateTimeField, IntegerField
+from peewee import TextField, ForeignKeyField
 from peewee import Model
 from peewee import SqliteDatabase
+from playhouse.shortcuts import model_to_dict
 
 from .config import CFG_DIR, DATABASE
 
 
 database = SqliteDatabase(DATABASE)
+LOGGER = logging.getLogger(__name__)
+FlatPrice = namedtuple("FlatPrice", "flat_id price")
 
 
 class BaseModel(Model):
@@ -17,6 +24,13 @@ class BaseModel(Model):
     @classmethod
     def get_visible_fields(cls):
         return getattr(cls, "_visible_fields", ())
+
+    def to_dict(self):
+        return {
+            key: value for key, value
+            in model_to_dict(self).items()
+            if key in self.get_visible_fields()
+        }
 
 
 class Flat(BaseModel):
@@ -46,22 +60,39 @@ class Flat(BaseModel):
 
     @classmethod
     def save_flats(cls, flat_infos):
-        with database.atomic() as txn:
-            cls.insert_many(flat_infos).execute()
-            txn.commit()
+        prices = []
+        for newflat in flat_infos:
+            flat, created = cls.get_or_create(flat_id=newflat["flat_id"], defaults=newflat)
+            if not created:
+                for key, value in newflat.items():
+                    setattr(flat, key, value)
+            flat.save()
+            LOGGER.debug("%s flat was %s", newflat["flat_id"], "created" if created else "updated")
+            FlatPrice.update_price(flat_id=flat.flat_id, price=flat.price)
 
 
-class PriceHistory(BaseModel):
-    flat_id = IntegerField(primary_key=True)
-    created_at = DateField()
+class FlatPrice(BaseModel):
+    flat_price_id = IntegerField(primary_key=True)
+    flat_id = ForeignKeyField(Flat, backref='prices')
+    created_at = DateTimeField(default=datetime.datetime.now)
     price = IntegerField()
 
     class Meta:
-        table_name = "price_history"
+        table_name = "flat_prices"
+
+    @classmethod
+    def update_price(cls, flat_id, price):
+        cls.create(flat_id=flat_id, price=price)
+
+    @classmethod
+    def update_prices(cls, new_prices):
+        with database.atomic() as txn:
+            cls.insert_many(new_prices).execute()
+            txn.commit()
 
 
 def check_database():
     if not os.path.exists(CFG_DIR):
         os.mkdir(CFG_DIR)
     with database:
-        database.create_tables([Flat, PriceHistory])
+        database.create_tables([Flat, FlatPrice])

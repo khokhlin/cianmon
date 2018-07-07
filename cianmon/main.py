@@ -1,10 +1,11 @@
 """cian.ru parser"""
 import argparse
+import logging
+import os
 
 from .client import get_updates
 from .model import check_database
 from .model import Flat
-from . import show
 
 
 def parse_args():
@@ -30,10 +31,12 @@ def update(ids_file=None, ids=None):
 
 def history(ids=None):
     items = Flat.get_flats(ids)
-    show(Flat, items)
+    print([item.to_dict() for item in items])
 
 
 def main():
+    if os.getenv("DEBUG"):
+        logging.basicConfig(level=logging.DEBUG)
     args = vars(parse_args())
     action = globals().get(args.pop("action"))
     check_database()
