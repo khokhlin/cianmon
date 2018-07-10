@@ -14,7 +14,6 @@ from .config import CFG_DIR, DATABASE
 
 database = SqliteDatabase(DATABASE)
 LOGGER = logging.getLogger(__name__)
-FlatPrice = namedtuple("FlatPrice", "flat_id price")
 
 
 class BaseModel(Model):

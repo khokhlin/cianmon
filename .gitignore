@@ -1,5 +1,7 @@
 __pycache__
+.pytest_cache/
 cianmon.egg-info/
 build/
 dist/
 *.swp
+Pipfile.lock

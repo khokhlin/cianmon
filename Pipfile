@@ -1,0 +1,17 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+peewee = "*"
+"bs4" = "*"
+requests = "*"
+dateutils = "*"
+
+[dev-packages]
+pytest = "*"
+ipdb = "*"
+
+[requires]
+python_version = "3.6"
