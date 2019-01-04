@@ -1,15 +1,10 @@
-import logging
 import re
 import sys
 from time import sleep
-
 import requests
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 from  bs4 import BeautifulSoup
-from .config import PAUSE, URL
-
-
-LOGGER = logging.getLogger(__name__)
+from cianmon.config import PAUSE, URL
 
 
 def get_flat_page(flat_id):
@@ -27,18 +22,20 @@ def get_flat_info(flat_id):
     soup = BeautifulSoup(content, "html.parser")
     try:
         title = soup.find("h1", class_=re.compile("title.*")).text
-        descr_el = soup.find("div", {"id": "description"})
-        description = descr_el.find(class_=re.compile("description-text.*")).text
+        descr_elem = soup.find("div", {"id": "description"})
+        description = descr_elem.find(
+            class_=re.compile("description-text.*")).text
 
-        info_els = descr_el.findAll(class_=re.compile("info-text.*"))
-        infoslen = len(info_els)
-        square_total = re.sub(r"\D", "", info_els[0].text) if infoslen >= 1 else None
-        square_live = re.sub(r"\D", "", info_els[1].text) if infoslen >= 2 else None
-        square_kitchen = re.sub(r"\D", "", info_els[2].text) if infoslen >= 3 else None
-        floor, floors = re.split(r"\D+", info_els[3].text) if infoslen >= 4 else (None, None)
-        if infoslen >= 5:
-            match = re.search(r"\d{4}", info_els[4].text)
-            build_year = match.group() if match else None
+        elems = descr_elem.findAll(class_=re.compile("info-text.*"))
+        elem_count = len(elems)
+        total_square = float(elems[0].text) if elem_count >= 1 else None
+        live_square = float(elems[1].text) if elem_count >= 2 else None
+        kitchen_square = float(elems[2].text) if elem_count >= 3 else None
+        if elem_count >= 4:
+            floor, floors = (int(val) for val in re.split(r"\D+", elems[3].text))
+        if elem_count >= 5:
+            match = re.search(r"\d{4}", elems[4].text)
+            build_year = int(match.group()) if match else None
         else:
             build_year = None
 
@@ -46,21 +43,20 @@ def get_flat_info(flat_id):
         price = re.sub(r"\D", "", price_el.text)
         geo = soup.find("div", class_=re.compile("geo.*")).text
     except AttributeError:
-        LOGGER.exception("Unable to get this flat info: %s", flat_id)
         return {}
     else:
         return {
             "flat_id": flat_id,
             "title": title,
-            "square_total": square_total,
-            "square_live": square_live,
-            "square_kitchen": square_kitchen,
+            "description": description,
+            "total_square": total_square,
+            "kitchen_square": kitchen_square,
+            "live_square": live_square,
             "floor": floor,
             "floors": floors,
             "build_year": build_year,
-            "description": description,
+            "price": price,
             "geo": geo,
-            "price": price
         }
 
 

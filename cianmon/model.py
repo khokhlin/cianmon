@@ -1,7 +1,5 @@
 import os
 import datetime
-import logging
-from collections import namedtuple
 
 from peewee import CharField, DateTimeField, IntegerField
 from peewee import TextField, ForeignKeyField
@@ -9,11 +7,9 @@ from peewee import Model
 from peewee import SqliteDatabase
 from playhouse.shortcuts import model_to_dict
 
-from .config import CFG_DIR, DATABASE
-
+from cianmon.config import CFG_DIR, DATABASE
 
 database = SqliteDatabase(DATABASE)
-LOGGER = logging.getLogger(__name__)
 
 
 class BaseModel(Model):
@@ -35,9 +31,9 @@ class BaseModel(Model):
 class Flat(BaseModel):
     flat_id = IntegerField(primary_key=True)
     title = CharField()
-    square_total = IntegerField()
-    square_live = IntegerField()
-    square_kitchen = IntegerField()
+    total_square = IntegerField()
+    live_square = IntegerField()
+    kitchen_square = IntegerField()
     floor = IntegerField()
     floors = IntegerField()
     build_year = IntegerField()
@@ -45,7 +41,8 @@ class Flat(BaseModel):
     geo = CharField()
     price = IntegerField()
 
-    _visible_fields = ["flat_id", "title", "square_total", "square_live", "price"]
+    _visible_fields = frozenset((
+        "flat_id", "title", "total_square", "live_square", "price"))
 
     class Meta:
         table_name = "flats"
@@ -59,14 +56,14 @@ class Flat(BaseModel):
 
     @classmethod
     def save_flats(cls, flat_infos):
-        prices = []
         for newflat in flat_infos:
-            flat, created = cls.get_or_create(flat_id=newflat["flat_id"], defaults=newflat)
+            flat, created = cls.get_or_create(
+                flat_id=newflat["flat_id"], defaults=newflat)
             if not created:
-                for key, value in newflat.items():
+                for key, value in newflat:
                     setattr(flat, key, value)
             flat.save()
-            LOGGER.debug("%s flat was %s", newflat["flat_id"], "created" if created else "updated")
+            result = "created" if created else "updated"
             FlatPrice.update_price(flat_id=flat.flat_id, price=flat.price)
 
 
@@ -90,8 +87,17 @@ class FlatPrice(BaseModel):
             txn.commit()
 
 
+def create_tables():
+    with database:
+        database.create_tables([Flat, FlatPrice])
+
+
+def drop_tables():
+    with database:
+        database.drop_tables([Flat, FlatPrice])
+
+
 def check_database():
     if not os.path.exists(CFG_DIR):
         os.mkdir(CFG_DIR)
-    with database:
-        database.create_tables([Flat, FlatPrice])
+    create_tables()

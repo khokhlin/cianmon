@@ -12,6 +12,7 @@ dateutils = "*"
 [dev-packages]
 pytest = "*"
 ipdb = "*"
+pytest-mock = "*"
 
 [requires]
 python_version = "3.6"

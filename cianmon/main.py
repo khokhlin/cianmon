@@ -1,11 +1,9 @@
 """cian.ru parser"""
 import argparse
-import logging
-import os
 
-from .client import get_updates
-from .model import check_database
-from .model import Flat
+from cianmon.client import get_updates
+from cianmon.model import check_database
+from cianmon.model import Flat
 
 
 def parse_args():
@@ -35,8 +33,6 @@ def history(ids=None):
 
 
 def main():
-    if os.getenv("DEBUG"):
-        logging.basicConfig(level=logging.DEBUG)
     args = vars(parse_args())
     action = globals().get(args.pop("action"))
     check_database()

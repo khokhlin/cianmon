@@ -4,4 +4,3 @@ cianmon.egg-info/
 build/
 dist/
 *.swp
-Pipfile.lock
