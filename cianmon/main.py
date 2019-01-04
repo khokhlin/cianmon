@@ -20,9 +20,8 @@ def parse_args():
 def update(ids_file=None, ids=None):
     ids = set(ids) if ids else set()
     if ids_file:
-        with open(ids_file) as file_:
-            for row in file_.readlines():
-                ids.add(int(row.strip()))
+        for line in open(ids_file):
+            ids.add(int(line.strip()))
     flats = get_updates(ids)
     Flat.save_flats(flats)
 
