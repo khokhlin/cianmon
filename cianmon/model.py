@@ -48,15 +48,15 @@ class Flat(BaseModel):
         table_name = "flats"
 
     @classmethod
-    def get_flats(cls, ids=None):
+    def get_items(cls, ids=None):
         query = cls.select()
         if ids:
             query = query.where(cls.flat_id << ids)
         return query
 
     @classmethod
-    def save_flats(cls, flat_infos):
-        for newflat in flat_infos:
+    def save_many(cls, items):
+        for newflat in items:
             flat, created = cls.get_or_create(
                 flat_id=newflat["flat_id"], defaults=newflat)
             if not created:

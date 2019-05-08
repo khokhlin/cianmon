@@ -23,12 +23,12 @@ def update(ids_file=None, ids=None):
         for line in open(ids_file):
             ids.add(int(line.strip()))
     flats = get_updates(ids)
-    Flat.save_flats(flats)
+    Flat.save_many(flats)
 
 
 def history(ids=None):
-    items = Flat.get_flats(ids)
-    print([item.to_dict() for item in items])
+    flats = Flat.get_items(ids)
+    print([flat.to_dict() for flat in flats])
 
 
 def main():

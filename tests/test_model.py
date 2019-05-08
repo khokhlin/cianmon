@@ -15,7 +15,7 @@ def test_can_save_data():
         "floor": 4,
         "floors": 5
     }
-    Flat.save_flats([flat_info])
+    Flat.save_many([flat_info])
     flats = Flat.select()
     assert flats.count() == 1
     expected = {
